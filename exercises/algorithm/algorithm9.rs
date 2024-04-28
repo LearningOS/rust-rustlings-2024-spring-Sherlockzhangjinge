@@ -2,7 +2,6 @@
 	heap
 	This question requires you to implement a binary heap function
 */
-// I AM NOT DONE
 
 use std::cmp::Ord;
 use std::default::Default;
@@ -36,8 +35,20 @@ where
         self.len() == 0
     }
 
-    pub fn add(&mut self, value: T) {
-        //TODO
+    pub fn add(&mut self, value: T)
+    where T:Clone {
+        self.items.push(value); // Add the new element at the end
+        self.count += 1; // Increment the count
+    
+        // Perform bubble-up to restore the heap property
+        let mut current_idx = self.count; // Index of the newly added element
+        let mut current_value = self.items[current_idx].clone(); // Clone the value for temporary storage
+        while current_idx > 1 && (self.comparator)(&current_value, &self.items[self.parent_idx(current_idx)]) {
+            let parent_idx = self.parent_idx(current_idx);
+            self.items[current_idx] = self.items[parent_idx].clone(); // Move parent down
+            current_idx = parent_idx; // Move up to parent index
+        }
+        self.items[current_idx] = current_value; // Insert the new value at the correct position
     }
 
     fn parent_idx(&self, idx: usize) -> usize {
@@ -57,9 +68,16 @@ where
     }
 
     fn smallest_child_idx(&self, idx: usize) -> usize {
-        //TODO
-		0
+        let left_child_idx = self.left_child_idx(idx);
+        let right_child_idx = self.right_child_idx(idx);
+    
+        if right_child_idx <= self.count && (self.comparator)(&self.items[right_child_idx], &self.items[left_child_idx]) {
+            right_child_idx // Right child is smaller
+        } else {
+            left_child_idx // Left child is smaller or there's only a left child
+        }
     }
+    
 }
 
 impl<T> Heap<T>
@@ -79,14 +97,35 @@ where
 
 impl<T> Iterator for Heap<T>
 where
-    T: Default,
+    T: Default+Clone,
 {
     type Item = T;
 
     fn next(&mut self) -> Option<T> {
-        //TODO
-		None
+        if self.is_empty() {
+            return None; // If the heap is empty, return None
+        }
+    
+        let root_value = self.items[1].clone(); // Get the root value
+        self.items.swap(1, self.count); // Swap root with last element
+        self.items.pop(); // Remove the last element
+        self.count -= 1; // Decrement the count
+    
+        // Perform bubble-down to restore the heap property
+        let mut current_idx = 1; // Start at the root
+        while self.children_present(current_idx) {
+            let smallest_child_idx = self.smallest_child_idx(current_idx);
+            if (self.comparator)(&self.items[smallest_child_idx], &self.items[current_idx]) {
+                self.items.swap(current_idx, smallest_child_idx); // Swap with smallest child
+                current_idx = smallest_child_idx; // Move down to smallest child index
+            } else {
+                break; // Heap property satisfied
+            }
+        }
+    
+        Some(root_value) // Return the removed root value
     }
+    
 }
 
 pub struct MinHeap;
